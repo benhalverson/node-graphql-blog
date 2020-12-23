@@ -1,67 +1,125 @@
 import { GraphQLServer } from 'graphql-yoga';
+const users = [
+	{
+		id: '1',
+		name: 'Ben',
+		email: 'ben@example.com',
+		age: 27
+	},
+	{
+		id: '2',
+		name: 'Sarah',
+		email: 'sarah@example.com'
+	},
+	{
+		id: '3',
+		name: 'Mike',
+		email: 'mike@example.com'
+	}
+];
 
-// Type definitions (schema) 
+const posts = [
+	{
+		id: '10',
+		title: 'GraphQL 101',
+		body: 'This is how to use GraphQL...',
+		published: true,
+		author: '1'
+	},
+	{
+		id: '11',
+		title: 'GraphQL 201',
+		body: 'This is an advanced GraphQL post...',
+		published: false,
+		author: '1'
+	},
+	{
+		id: '12',
+		title: 'Programming Music',
+		body: '',
+		published: false,
+		author: '2'
+	}
+];
+
+// Type definitions (schema)
 const typeDefs = `
-type Query {
-    greeting(name: String): String!
-    add(a: Float!, b: Float!): Float!
-    me: User!
-    post: Post!
-}
+    type Query {
+        users(query: String): [User!]!
+        posts(query: String): [Post!]!
+        me: User!
+        post: Post!
+    }
 
- type User {
-    id: ID!
-    name: String!
-    email: String!
-    age: Int
- }
+    type User {
+        id: ID!
+        name: String!
+        email: String!
+        age: Int
+    }
 
- type Post {
-     id: ID!
-     title: String!
-     body: String!
-     published: Boolean!
- }
+    type Post {
+        id: ID!
+        title: String!
+        body: String!
+        published: Boolean!
+        author: User!
+    }
 `;
 
 // Resolvers
-
 const resolvers = {
-    Query: {
-        greeting(parent, args, context, info) {
-           console.log(args);
-           if(args.name) {
-            return `Hello ${args.name}`;
-           }
-           return 'Hello!';
-        },
-        add(parent, args) {
-            return args.a + args.b;
-        },
-        me() {
-            return {
-                id: '1234',
-                name: 'Ben',
-                email: 'ben@benhalverson.me',
-                age: 39,
-            };
-        },
-        post() {
-            return {
-                id: '69420',
-                title: 'Art of war',
-                body: 'Hello world',
-                published: true
-            };
-        }
-    }
+	Query: {
+		users(parent, args, ctx, info) {
+			if (!args.query) {
+				return users;
+			}
+
+			return users.filter((user) => {
+				return user.name.toLowerCase().includes(args.query.toLowerCase());
+			});
+		},
+		posts(parent, args, ctx, info) {
+			if (!args.query) {
+				return posts;
+			}
+
+			return posts.filter((post) => {
+				const isTitleMatch = post.title.toLowerCase().includes(args.query.toLowerCase());
+				const isBodyMatch = post.body.toLowerCase().includes(args.query.toLowerCase());
+				return isTitleMatch || isBodyMatch;
+			});
+		},
+		me() {
+			return {
+				id: '123098',
+				name: 'Mike',
+				email: 'mike@example.com'
+			};
+		},
+		post() {
+			return {
+				id: '092',
+				title: 'GraphQL 101',
+				body: '',
+				published: false
+			};
+		}
+	},
+	Post: {
+		author(parent, args, ctx, info) {
+			return users.find((user) => {
+				return user.id === parent.author;
+			});
+		}
+	}
 };
 
 const server = new GraphQLServer({
-    typeDefs,
-    resolvers,
+	typeDefs,
+	resolvers
 });
 
 server.start(() => {
-    console.log('The server is running');
+	console.log('The server is running');
 });
