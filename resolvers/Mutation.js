@@ -88,30 +88,30 @@ const Mutation = {
 		return post;
 	},
 
-  updatePost(parent, args, context, info) {
-    const { id, data } = args;
-    const { db } = context;
+	updatePost(parent, args, context, info) {
+		const { id, data } = args;
+		const { db } = context;
 
-    const post = db.posts.find((post) => post.id === id);
+		const post = db.posts.find((post) => post.id === id);
 
-    if(!post) {
-      throw new Error('Post not found');
-    }
+		if (!post) {
+			throw new Error('Post not found');
+		}
 
-    if(typeof data.title === 'string') {
-      post.title = data.title
-    }
+		if (typeof data.title === 'string') {
+			post.title = data.title;
+		}
 
-    if(typeof data.body === 'string') {
-      post.body = data.body;
-    }
+		if (typeof data.body === 'string') {
+			post.body = data.body;
+		}
 
-    if(typeof data.published === 'boolean') {
-      post.published = data.published;
-    }
+		if (typeof data.published === 'boolean') {
+			post.published = data.published;
+		}
 
-    return post;
-  },
+		return post;
+	},
 
 	deletePost(parent, args, { db }, info) {
 		const postIndex = db.posts.findIndex((post) => post.id === args.id);
@@ -127,7 +127,7 @@ const Mutation = {
 		return deletedPosts[0];
 	},
 
-	createComment(parent, args, { db }, info) {
+	createComment(parent, args, { db, pubsub }, info) {
 		const userExists = db.users.some((user) => user.id === args.data.author);
 		const postExists = db.posts.some((post) => post.id === args.data.post && post.published);
 
@@ -141,6 +141,7 @@ const Mutation = {
 		};
 
 		db.comments.push(comment);
+		pubsub.publish(`comment ${args.data.post}`, { comment });
 		return comment;
 	},
 
@@ -153,20 +154,20 @@ const Mutation = {
 		return deletedComments[0];
 	},
 
-  updateComment(parent, args, context, info) {
-    const { id, data } = args;
-    const { db } = context;
-    const comment = db.comments.find((comment) => comment.id === id);
-    
-    if(!comment) {
-      throw new Error('Comment not found');
-    }
+	updateComment(parent, args, context, info) {
+		const { id, data } = args;
+		const { db } = context;
+		const comment = db.comments.find((comment) => comment.id === id);
 
-    if(typeof data.text === 'string') {
-      comment.text = data.text;
-    }
-    return comment;
-  }
+		if (!comment) {
+			throw new Error('Comment not found');
+		}
+
+		if (typeof data.text === 'string') {
+			comment.text = data.text;
+		}
+		return comment;
+	}
 };
 
 export default Mutation;
